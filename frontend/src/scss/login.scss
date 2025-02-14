@@ -13,6 +13,9 @@
 .login-form {
     background-color: #36373b;
     padding: toRem(60) toRem(40);
+    @media (max-width: $mobile) {
+        padding: toRem(25) toRem(20);
+    }
     border-radius: toRem(20);
     display: grid;
     row-gap: toRem(25);
@@ -40,6 +43,18 @@
     &__pass-label {
         display: flex;
         justify-content: space-between;
+        button {
+            &:focus {
+                outline: none;
+                text-decoration: underline;
+            }
+            transition: color 0.3s;
+            @media (any-hover: hover) {
+                &:hover {
+                    color: $green;
+                }
+            }
+        }
     }
     // .login-form__button
     &__button {
@@ -48,11 +63,31 @@
         padding: toRem(15) toRem(10);
         color: #000;
         font-weight: 500;
+        transition: all 0.3s;
+        outline: 2px solid transparent;
+        &:focus {
+            background-color: #36373b;
+            outline-color: $green;
+            color: #f5f5f5;
+        }
+        @media (any-hover: hover) {
+            &:hover {
+                background-color: #36373b;
+                outline-color: $green;
+                color: #f5f5f5;
+            }
+        }
     }
     // .login-form__link
     &__link {
         a {
-            transition: color 0.3s;
+            transition: all 0.3s;
+            &:focus {
+                color: $green;
+                outline: none;
+                transform: translate(0px, -5px);
+            }
+
             text-decoration: underline;
             @media (any-hover: hover) {
                 &:hover {
@@ -62,6 +97,7 @@
         }
     }
 }
+
 .login-input {
     border-bottom: 2px solid $backgroundColor;
     transition: border 0.3s;
@@ -69,4 +105,7 @@
 .login-input:focus {
     border-bottom: 2px solid $green;
     outline: none;
+}
+.show-pass-button {
+    display: flex;
 }
