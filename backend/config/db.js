@@ -1,7 +1,5 @@
 const mysql = require("mysql2");
-const dotenv = require("dotenv");
-
-dotenv.config();
+require("dotenv").config();
 
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -12,10 +10,10 @@ const db = mysql.createConnection({
 
 db.connect((err) => {
   if (err) {
-    console.error("Ошибка подключения к базе данных:", err);
-  } else {
-    console.log("Подключение к базе данных успешно!");
+    console.error("Ошибка подключения к базе данных:", err.stack);
+    return;
   }
+  console.log("Подключено к базе данных");
 });
 
 module.exports = db;

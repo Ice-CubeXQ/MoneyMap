@@ -1,6 +1,6 @@
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PasswordInput from "../components/forms/PasswordInput";
-import { useState } from "react";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -8,37 +8,35 @@ const RegisterPage = () => {
     name: "",
     password: "",
   });
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
     try {
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch("http://localhost:5000/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ username: formData.name, email: formData.email, password: formData.password }),
+        credentials: "include",
       });
+
+      const data = await response.json();
       if (response.ok) {
         navigate("/login");
       } else {
-        // Обработка ошибок
-        const data = await response.json();
-        alert(data.message || "Registration failed");
+        setError(data.message);
       }
-    } catch (error) {
-      console.error("Error during registration:", error);
-      alert("An error occurred during registration");
+    } catch (err) {
+      setError("Ошибка при регистрации");
     }
   };
 
@@ -47,7 +45,7 @@ const RegisterPage = () => {
       <div className="login-page__container">
         <form className="login-page__form login-form" onSubmit={handleSubmit}>
           <h1 className="login-form__title">Sign up</h1>
-
+          {error && <p className="error-message">{error}</p>}
           <div className="login-form__items">
             <div className="login-form__item">
               <label htmlFor="email">Email</label>
@@ -59,11 +57,9 @@ const RegisterPage = () => {
             </div>
             <PasswordInput value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
           </div>
-
           <button type="submit" className="login-form__button">
             Sign up
           </button>
-
           <div className="login-form__link">
             Do you already have an account? <Link to="/login">Sign In!</Link>
           </div>
@@ -72,4 +68,5 @@ const RegisterPage = () => {
     </div>
   );
 };
+
 export default RegisterPage;

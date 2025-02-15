@@ -1,49 +1,24 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const DashboardPage = () => {
-  const [dashboardData, setDashboardData] = useState(null);
-  const [error, setError] = useState("");
+  const { user, setUser } = useAuth();
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-
-        const response = await fetch("/api/dashboard", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          setDashboardData(data);
-        } else {
-          setError(data.error || "Ошибка при загрузке данных");
-        }
-      } catch (error) {
-        setError("Ошибка при загрузке данных");
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
-
-  if (error) {
-    return <div>{error}</div>;
-  }
+  const logout = () => {
+    fetch("http://localhost:5000/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+    setUser(null);
+  };
 
   return (
     <div>
-      <h1>Dashboard</h1>
-      {dashboardData && (
-        <div>
-          <p>{dashboardData.message}</p>
-          <p>User ID: {dashboardData.userId}</p>
-        </div>
-      )}
+      <span>Welcome, {user.username}</span>
+      <br />
+      <button onClick={logout}>Logout</button>
     </div>
   );
 };
+
 export default DashboardPage;

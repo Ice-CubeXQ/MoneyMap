@@ -1,63 +1,52 @@
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
+// const jwt = require("jsonwebtoken");
 const db = require("../config/db");
+
+const register = async (req, res) => {
+  const { username, email, password } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 8);
+
+  const query = "INSERT INTO Users (username, email, password_hash) VALUES (?, ?, ?)";
+  db.query(query, [username, email, hashedPassword], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Ошибка при регистрации пользователя" });
+    }
+    res.status(201).json({ message: "Пользователь зарегистрирован" });
+  });
+};
+
+const login = async (req, res) => {
+  const { email, password } = req.body;
+  const query = "SELECT * FROM Users WHERE email = ?";
+  db.query(query, [email], async (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(401).json({ message: "Неверный email или пароль" });
+    }
+
+    const user = results[0];
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Неверный email или пароль" });
+    }
+
+    const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    res.cookie("token", token, { httpOnly: true, secure: process.env.NODE_ENV === "production" });
+    res.json({ message: "Успешный вход", user: { id: user.user_id, username: user.username, email: user.email } });
+  });
+};
+
+const logout = (req, res) => {
+  res.clearCookie("token");
+  res.json({ message: "Успешный выход" });
+};
+
 const jwt = require("jsonwebtoken");
 
-const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
-
-  try {
-    // Хэшируем пароль
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    // Сохраняем пользователя в базе данных
-    const query = "INSERT INTO Users (username, email, password_hash) VALUES (?, ?, ?)";
-    db.query(query, [name, email, passwordHash], (err, results) => {
-      if (err) {
-        console.error("Ошибка при регистрации:", err);
-        return res.status(500).json({ error: "Ошибка при регистрации" });
-      }
-      res.json({ message: "Пользователь успешно зарегистрирован" });
-    });
-  } catch (error) {
-    console.error("Ошибка при хэшировании пароля:", error);
-    res.status(500).json({ error: "Ошибка при регистрации" });
+const me = (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Не авторизован" });
   }
+  res.json({ user: req.user });
 };
 
-const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    // Находим пользователя по email
-    const query = "SELECT * FROM Users WHERE email = ?";
-    db.query(query, [email], async (err, results) => {
-      if (err) {
-        console.error("Ошибка при поиске пользователя:", err);
-        return res.status(500).json({ error: "Ошибка при входе" });
-      }
-
-      if (results.length === 0) {
-        return res.status(401).json({ error: "Неверный email или пароль" });
-      }
-
-      const user = results[0];
-
-      // Сравниваем пароль
-      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-      if (!isPasswordValid) {
-        return res.status(401).json({ error: "Неверный email или пароль" });
-      }
-
-      // Создаем JWT токен
-      const token = jwt.sign({ userId: user.user_id }, "yX9-qjE2p2tFVtMl8-Q7w9G_RxTc1A7_FUu9p_MHeBQ", { expiresIn: "1h" });
-
-      res.json({ token });
-    });
-  } catch (error) {
-    console.error("Ошибка при входе:", error);
-    res.status(500).json({ error: "Ошибка при входе" });
-  }
-};
-
-module.exports = { registerUser, loginUser };
+module.exports = { register, login, logout, me };
